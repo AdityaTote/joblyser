@@ -1,0 +1,31 @@
+package agent
+
+import (
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+)
+
+type AccessClaims struct {
+	UserID string `json:"uid"`
+	jwt.RegisteredClaims
+}
+
+var (
+	accessTTL = 3 * time.Minute
+)
+
+func signToken(accessSecret []byte, userId uuid.UUID) (string, error) {
+	claims := AccessClaims{
+		UserID: userId.String(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTTL)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "api",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(accessSecret)
+}

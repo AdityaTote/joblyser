@@ -1,0 +1,20 @@
+.git
+.gitignore
+.DS_Store
+
+# Python environments and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local/dev config
+.env
+.env.*
+!.env.example
+
+# IDE/editor files
+.vscode/
+.idea/

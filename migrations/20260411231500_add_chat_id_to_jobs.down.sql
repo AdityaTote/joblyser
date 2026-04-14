@@ -1,0 +1,4 @@
+DROP INDEX IF EXISTS idx_jobs_chat_id;
+
+ALTER TABLE jobs
+DROP COLUMN IF EXISTS chat_id;

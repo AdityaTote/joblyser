@@ -1,0 +1,18 @@
+.git
+.gitignore
+.DS_Store
+
+# Local/dev config
+.env
+.env.*
+!.env.example
+
+# Test/build artifacts
+coverage/
+tmp/
+bin/
+dist/
+
+# IDE/editor files
+.vscode/
+.idea/

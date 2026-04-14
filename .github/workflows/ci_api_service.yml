@@ -1,0 +1,35 @@
+name: build api service
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: joblyser-api
+
+    steps:
+      - name: checkout respository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: joblyser-api/go.mod
+          cache: true
+          cache-dependency-path: joblyser-api/go.sum
+
+      - name: Verify Go version
+        run: go version
+
+      - name: Download dependencies
+        run: go mod tidy
+
+      - name: Build
+        run: go build ./...

@@ -1,0 +1,20 @@
+.git
+.gitignore
+.DS_Store
+
+# Dependencies and build artifacts
+node_modules/
+.next/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+
+# Local/dev config
+.env
+.env.*
+!.env.example
+
+# IDE/editor files
+.vscode/
+.idea/

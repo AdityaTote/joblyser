@@ -1,0 +1,30 @@
+.git
+**/.git
+**/.DS_Store
+**/.idea
+**/.vscode
+
+# Python artifacts
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+
+# JavaScript artifacts
+**/node_modules
+**/.next
+**/dist
+**/out
+**/coverage
+**/*.tsbuildinfo
+
+# Local env/config files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Misc temp/build output
+**/tmp
+**/bin
