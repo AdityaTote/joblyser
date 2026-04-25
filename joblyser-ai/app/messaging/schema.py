@@ -1,4 +1,8 @@
+import asyncio
+
 from pydantic import BaseModel
+
+JOB_QUEUE: dict[str, asyncio.Queue] = {}
 
 class TaskParams(BaseModel):
   job_id: str

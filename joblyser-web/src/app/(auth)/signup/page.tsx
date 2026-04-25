@@ -1,190 +1,160 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Briefcase,
-  Mail,
-  Lock,
-  User,
-  Globe,
-  ArrowRight,
-} from "lucide-react";
-import { motion } from "motion/react";
-import { useSignUp, useGoogleUrl } from "@/hooks/queries/useAuth";
-import { Loader2 } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { ArrowLeft, Globe, Lock, Mail, User, Zap } from "lucide-react";
+import { useGoogleUrl, useSignUp } from "@/hooks/queries/useAuth";
 
-
-export default function SignupPage() {
-  const [email, setEmail] = useState("");
+export default function SignUpPage() {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { mutate: signUp, isPending, error } = useSignUp();
-  const { mutate: getGoogleUrl, isPending: googlePending } = useGoogleUrl();
+  const signUpMutation = useSignUp();
+  const googleMutation = useGoogleUrl();
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    signUp({ email, name, password });
+  const isSubmitting = signUpMutation.isPending || googleMutation.isPending;
+  const errorMessage =
+    signUpMutation.error?.message || googleMutation.error?.message;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    signUpMutation.mutate({ name, email, password });
   };
 
-  const handleGoogleLogin = () => {
-    getGoogleUrl();
+  const handleGoogleSignUp = () => {
+    googleMutation.mutate();
   };
-
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface p-6 relative overflow-hidden">
-      <div className="absolute inset-0 grid-bg opacity-[0.04] pointer-events-none" />
-      <div className="absolute inset-0 bg-linear-to-b from-brand/4 via-transparent to-transparent pointer-events-none" />
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-[400px] relative z-10"
-      >
-        <div className="flex flex-col items-center mb-8">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 bg-brand rounded-[4px] flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Briefcase className="w-5 h-5 text-white" />
+    <main className="min-h-[calc(100vh-2.25rem)]">
+      <div className="px-8 py-7">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-[13px] font-medium text-[#7f838e]"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to Home
+        </Link>
+      </div>
+
+      <div className="flex items-start justify-center px-4 pb-10 sm:px-6">
+        <section className="w-full max-w-[320px] overflow-hidden rounded-[18px] border border-[#d6d7dc] bg-[#f7f7f8] shadow-[0_5px_16px_rgb(19_20_28/7%)]">
+          <div className="px-3 pb-6 pt-5 text-center">
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-[13px] bg-[#15161e] text-white">
+              <Zap className="h-4 w-4" />
             </div>
-            <span className="text-xl font-semibold tracking-tight">
-              Joblyser
-            </span>
-          </Link>
-        </div>
+            <h1 className="mt-4 text-[39px] font-semibold text-[#15161d]">
+              Create an account
+            </h1>
+            <p className="mt-1 text-[13px] text-[#888c96]">
+              Join Joblyser and accelerate your career
+            </p>
 
-        <Card className="premium-card bg-surface border-border shadow-md">
-          <CardHeader className="space-y-1 pt-2 pb-6 text-center">
-            <CardTitle className="text-[20px]">Create Account</CardTitle>
-            <CardDescription className="text-[13px] text-text2">
-              Join thousands of job seekers using AI.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-5">
-            <Button
-              variant="outline"
-              className="btn-ghost w-full h-10 gap-3 bg-surface2/40 hover:bg-surface2"
-              onClick={handleGoogleLogin}
-              disabled={googlePending || isPending}
-            >
-              {googlePending ? (
-                <Loader2 className="h-4 w-4 animate-spin text-brand" />
-              ) : (
-                <Globe className="h-4 w-4 text-brand" />
-              )}
-              Sign up with Google
-            </Button>
-
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-mono">
-                <span className="bg-surface px-3 text-text3">OR_EMAIL</span>
-              </div>
-            </div>
-
-            <form onSubmit={handleSignup} className="grid gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-text2 uppercase tracking-wider">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="mb-1.5 block text-xs font-semibold text-[#23252d]"
+                >
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text3" />
-                  <Input
-                    type="text"
-                    placeholder="John Doe"
-                    className="input-field pl-10 w-full h-10"
+                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a2a6b0]" />
+                  <input
+                    id="name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="John Doe"
+                    className="h-10 w-full rounded-[12px] border border-[#d7d8dd] bg-[#f5f5f6] pl-9 pr-3 text-sm outline-none placeholder:text-[#adb1ba] focus:border-[#c3c6d1]"
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-text2 uppercase tracking-wider">
-                  Email Address
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-1.5 block text-xs font-semibold text-[#23252d]"
+                >
+                  Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text3" />
-                  <Input
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a2a6b0]" />
+                  <input
+                    id="email"
                     type="email"
-                    placeholder="name@company.com"
-                    className="input-field pl-10 w-full h-10"
+                    autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="name@example.com"
+                    className="h-10 w-full rounded-[12px] border border-[#d7d8dd] bg-[#f5f5f6] pl-9 pr-3 text-sm outline-none placeholder:text-[#adb1ba] focus:border-[#c3c6d1]"
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-text2 uppercase tracking-wider">
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-1.5 block text-xs font-semibold text-[#23252d]"
+                >
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text3" />
-                  <Input
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a2a6b0]" />
+                  <input
+                    id="password"
                     type="password"
-                    placeholder="••••••••"
-                    className="input-field pl-10 w-full h-10"
+                    autoComplete="new-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="h-10 w-full rounded-[12px] border border-[#d7d8dd] bg-[#f5f5f6] pl-9 pr-3 text-sm outline-none focus:border-[#c3c6d1]"
                     required
                   />
                 </div>
               </div>
-              {error && (
-                <div className="text-red-500 text-[12px] font-mono p-2 bg-red-500/10 border border-red-500/20 rounded-[4px]">
-                  [ERROR] {(error as any)?.message || "Registration failed"}
-                </div>
-              )}
-              <Button type="submit" className="btn-primary w-full h-10 mt-2" disabled={isPending || googlePending}>
-                {isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <ArrowRight className="mr-2 w-4 h-4" />
-                )}
-                Get Started
-              </Button>
 
-            </form>
-          </CardContent>
-          <CardFooter className="pb-6 pt-4 flex justify-center border-t border-border bg-surface2/30">
-            <p className="text-[12px] text-text2">
-              Already have an account?{" "}
-              <Link
-                href="/signin"
-                className="text-brand hover:underline font-semibold"
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-10 w-full rounded-[12px] bg-[#12131b] text-sm font-semibold text-white"
               >
-                Log in
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
+                {isSubmitting ? "Creating account..." : "Sign Up"}
+              </button>
 
-        <p className="mt-6 text-center text-[10px] text-text3 px-8 leading-relaxed font-mono">
-          [AUTH_NOTICE] By signing up, you agree to our{" "}
-          <a href="#" className="underline hover:text-brand">
-            Terms
-          </a>{" "}
-          and{" "}
-          <a href="#" className="underline hover:text-brand">
-            Privacy
-          </a>
-          .
-        </p>
-      </motion.div>
-    </div>
+              {errorMessage ? (
+                <p className="rounded-[10px] border border-[#f3c2c6] bg-[#fdf1f2] px-3 py-2 text-xs font-medium text-[#be2f37]">
+                  {errorMessage}
+                </p>
+              ) : null}
+
+              <div className="relative py-1 text-center">
+                <span className="relative z-10 bg-[#f7f7f8] px-2 text-[11px] text-[#9ea2ac]">
+                  OR CONTINUE WITH
+                </span>
+                <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-[#e0e1e6]" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleSignUp}
+                disabled={isSubmitting}
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border border-[#d7d8dd] bg-[#f7f7f8] text-sm font-semibold text-[#2a2d35]"
+              >
+                <Globe className="h-4 w-4" />
+                Google
+              </button>
+            </form>
+          </div>
+
+          <div className="border-t border-[#dfdfe4] bg-[#f3f3f5] px-3 py-4 text-center text-sm text-[#888c96]">
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold text-[#1a1b22]">
+              Login
+            </Link>
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }

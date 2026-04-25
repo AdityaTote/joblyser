@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Union
 
 from bson import ObjectId
-from bson.errors import InvalidId
+from bson.errors import InvalidDocument, InvalidId
 from pymongo import MongoClient, DESCENDING
 from pymongo.errors import PyMongoError
 
@@ -91,12 +91,12 @@ class DB:
       "jd_text": jd_text,
       "doc_key": doc_key,
       "user_query": user_query,
-      "agent_result": agent_output.model_dump(),
+      "agent_result": agent_output.model_dump(mode="json"),
       "created_at": datetime.utcnow()
       }
     try:
       result = chat.insert_one(payload)
-    except PyMongoError as exc:
+    except (PyMongoError, InvalidDocument) as exc:
       raise AgentResultStoreFailed(error=exc) from exc
     return AgentResultRow.model_validate({
       "_id": str(result.inserted_id),

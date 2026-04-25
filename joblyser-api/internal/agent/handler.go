@@ -216,6 +216,7 @@ func (h *agentHandler) RunAgent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, message, statusCode)
 		return
 	}
+	// w.Write()
 
 	lib.JSONWriter(w, http.StatusOK, lib.JSONResponse{Success: true, Message: "agent started", Data: resp})
 }

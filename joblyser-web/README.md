@@ -1,69 +1,36 @@
-# joblyser-web
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Frontend application for Joblyser, built with Next.js App Router + React Query + Zustand.
+## Getting Started
 
-## Responsibilities
-
-- User auth screens (`signin`, `signup`, callback flow)
-- Session workspace UI (`/sessions/[sessionId]`)
-- Profile and resume management UI
-- Job polling and AI output rendering/editing
-- Session history browsing and previous-run selection
-
-## Tech Stack
-
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS
-- TanStack Query
-- Zustand
-
-## Environment
-
-Create `.env.local`:
+First, run the development server:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8081/api/v1
-```
-
-## Default Runtime
-
-- App URL: `http://localhost:3000`
-- API base (expected): `http://localhost:8081/api/v1`
-
-## Run
-
-```bash
-npm install
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Open `http://localhost:3000`.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Scripts
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- `npm run dev` - start dev server
-- `npm run build` - production build
-- `npm run start` - start production server
-- `npm run lint` - run ESLint
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Key Folders
+## Learn More
 
-- `src/app` - routes/layouts
-- `src/components` - UI components
-- `src/hooks/queries` - API query/mutation hooks
-- `src/lib/api` - API client/services
-- `src/store` - persisted client store
+To learn more about Next.js, take a look at the following resources:
 
-## Session UX Notes
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-- `/sessions/new` starts a draft screen; first run gets a server-generated `session_id`.
-- Job status is polled every 5 seconds until completion/failure.
-- Editable result types autosave with debounce via edit route orchestration.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Quality Checks
+## Deploy on Vercel
 
-```bash
-npm run lint
-```
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

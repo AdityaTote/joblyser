@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.middlewares.request_middleware import authenticate_request, UserResponse
+from app.api.middlewares.auth_middleware import auth_middleware, UserResponse
 from app.api.schema.api_response import APIResponse
 from .service import RagService
 from .schema import RagStore, RagQuery, RagQueryRequest, RagStoreRequest
@@ -9,7 +9,7 @@ from .exception import RagError
 rag_router = APIRouter(prefix="/rag", tags=["rag"])
 
 @rag_router.post("/store", status_code=status.HTTP_201_CREATED, response_model=APIResponse)
-async def store(input_data: RagStoreRequest, user: UserResponse = Depends(authenticate_request)):
+async def store(input_data: RagStoreRequest, user: UserResponse = Depends(auth_middleware("api"))):
   try:
     params = RagStore(**input_data.model_dump(), user_id=user.id)
     await RagService.store(input_data=params)
@@ -41,7 +41,7 @@ async def store(input_data: RagStoreRequest, user: UserResponse = Depends(authen
   )
 
 @rag_router.post("/retrieval", status_code=status.HTTP_200_OK, response_model=APIResponse)
-async def query(input_data: RagQueryRequest, user: UserResponse = Depends(authenticate_request)):
+async def query(input_data: RagQueryRequest, user: UserResponse = Depends(auth_middleware(("worker", "api", "auth")))):
   try:
     params = RagQuery(**input_data.model_dump(), user_id=user.id)
     data = await RagService.query(input_data=params)

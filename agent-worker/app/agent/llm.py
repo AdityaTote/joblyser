@@ -68,7 +68,16 @@ class LLM:
         response = model.invoke(messages)
         print(f"[LLM] initial response: {response}")
 
+        max_tool_rounds = 6
+        tool_round = 0
+
         while hasattr(response, "tool_calls") and response.tool_calls:
+            tool_round += 1
+            if tool_round > max_tool_rounds:
+                raise RuntimeError(
+                    f"Exceeded max tool-call rounds ({max_tool_rounds}) for task={meta['task']}"
+                )
+
             tool_outputs = []
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]

@@ -112,6 +112,8 @@ services:
     env_file:
       - joblyser-ai/.env
     restart: unless-stopped
+    ports:
+      - "${AI_BIND_HOST:-127.0.0.1}:${AI_PORT:-8080}:${AI_PORT:-8080}"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -151,32 +153,32 @@ services:
       - joblyser-api/.env
     restart: unless-stopped
     ports:
-      - "${API_BIND_HOST:-127.0.0.1}:8081:8081"
+      - "${API_BIND_HOST:-127.0.0.1}:${API_PORT:-8081}:${API_PORT:-8081}"
     depends_on:
+      ai:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
       worker:
         condition: service_started
-      ai:
-        condition: service_healthy
     networks:
       - backend_net
 
-  web:
-    build:
-      context: .
-      dockerfile: docker/web.dockerfile
-    container_name: web
-    restart: unless-stopped
-    ports:
-      - "${WEB_BIND_HOST:-127.0.0.1}:3000:3000"
-    depends_on:
-      api:
-        condition: service_started
-    networks:
-      - backend_net
+  # web:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/web.dockerfile
+  #   container_name: web
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${WEB_BIND_HOST:-127.0.0.1}:3000:3000"
+  #   depends_on:
+  #     api:
+  #       condition: service_started
+  #   networks:
+  #     - backend_net
 
 volumes:
   postgres_data:

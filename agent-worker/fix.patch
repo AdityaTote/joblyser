@@ -1,0 +1,16 @@
+--- agent-worker/app/agent/nodes.py
++++ agent-worker/app/agent/nodes.py
+@@ -613,29 +613,18 @@
+   system_message = SystemMessage(content=LINKEDIN_NOTE_PROMPT)
+   user_message = HumanMessage(content=json.dumps({
+     "jd_requirements": job_requirements,
+     "candidate_resume_data": user_profile,
+     "user_id": state.user_id,
+     "document_id": state.doc_key,
+     "document_type": state.rag_document_type or "pdf",
+     "key": state.rag_key,
+   }, ensure_ascii=False))
+-  result = llm.run(messages=[system_message, user_message], task=TaskEnum.GEN, tools=[user_data_tool])
++  result = llm.run(messages=[system_message, user_message], task=TaskEnum.GEN)
+   print("[agent:write_linkedin_note] Raw LLM output:", result.content)
+   parsed = parse_json_payload(result.content)

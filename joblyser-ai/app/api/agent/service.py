@@ -85,6 +85,8 @@ class AgentService:
         raise InvalidAgentRequest("Session not found")
 
       input_data.session_id = normalized_session_id
+      input_data.jd_text = existing_session.get("jd_text", input_data.jd_text)
+      input_data.doc_key = existing_session.get("doc_key", input_data.doc_key)
     else:
       try:
         session = await mongo.sessions.insert_one({"user_id": input_data.user_id,"created_at": datetime.utcnow() })
@@ -111,6 +113,11 @@ class AgentService:
       if created_session_id:
         await AgentService._cleanup_session(session_id=created_session_id, user_id=input_data.user_id)
       raise JobCreateFailed(message=f"Failed to create agent job: {error}") from error
+      
+    print("[before publish] Created job with id:", job.id)
+    
+    # Commit the transaction so the worker can find the job in the database.
+    await pg_db.connection.commit()
 
     try:
       producer.publish(ProducerMessage(
@@ -122,11 +129,11 @@ class AgentService:
           user_id=input_data.user_id,
         ),
       ))
+      print(f"Published job {job.id} to queue")
     except Exception as error:
       if created_session_id:
         await AgentService._cleanup_session(session_id=created_session_id, user_id=input_data.user_id)
       raise QueuePublishFailed() from error
-
     return RunAgentResponse(job_id=job.id, session_id=input_data.session_id, status=JobStatus.queued)
 
   @staticmethod

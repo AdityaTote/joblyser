@@ -22,7 +22,7 @@ class AgentRequest(BaseModel):
   user_query: str
   jd_text: str
   doc_key: str
-  session_id: Optional[str]
+  session_id: Optional[str] = None
 
 class AgentServiceParams(AgentRequest):
   user_id: str

@@ -1,39 +1,86 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
+import { extractApiErrorMessage } from "@/lib/api/error";
 import { User } from "@/types/api";
 
-export const useUser = () => {
-  return useQuery({
+export function useUser() {
+  return useQuery<User, Error>({
     queryKey: ["user", "me"],
     queryFn: async () => {
-      const res = await api.user.getMe();
-      return res.data;
+      try {
+        const response = await api.user.getMe();
+        return response.data;
+      } catch (error) {
+        throw new Error(
+          extractApiErrorMessage(error, "Failed to load user profile"),
+        );
+      }
     },
   });
-};
+}
 
-export const useUpdateProfile = () => {
+export function useUpdateProfile() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Record<string, any> }) => {
-      const res = await api.user.updateProfile(id, data);
-      return res.data;
+
+  return useMutation<
+    User,
+    Error,
+    { id: string; data: Record<string, unknown> }
+  >({
+    mutationFn: async ({ id, data }) => {
+      try {
+        const response = await api.user.updateProfile(id, data);
+        return response.data;
+      } catch (error) {
+        throw new Error(
+          extractApiErrorMessage(error, "Failed to update profile"),
+        );
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", "me"] });
     },
   });
-};
+}
 
-export const useSetPrimaryResume = () => {
+export function useSetPrimaryResume() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (resumeKey: string) => {
-      const res = await api.user.setPrimaryResume(resumeKey);
-      return res.data;
+
+  return useMutation<User, Error, string>({
+    mutationFn: async (resumeKey) => {
+      try {
+        const response = await api.user.setPrimaryResume(resumeKey);
+        return response.data;
+      } catch (error) {
+        throw new Error(
+          extractApiErrorMessage(error, "Failed to set primary resume"),
+        );
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["documents", "list"] });
     },
   });
-};
+}
+
+export function useDeleteMe() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, void>({
+    mutationFn: async () => {
+      try {
+        await api.user.deleteMe();
+      } catch (error) {
+        throw new Error(
+          extractApiErrorMessage(error, "Failed to delete user account"),
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.clear();
+    },
+  });
+}

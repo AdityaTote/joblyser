@@ -37,7 +37,7 @@ func signToken(accessSecret []byte, userId uuid.UUID) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "api",
+			Issuer:    "auth",
 		},
 	}
 

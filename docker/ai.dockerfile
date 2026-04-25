@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir uv
+COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
 
 COPY ./joblyser-ai/pyproject.toml ./joblyser-ai/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project

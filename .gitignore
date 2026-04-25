@@ -38,3 +38,5 @@ bin/
 tmp/
 temp/
 docker-db-compose.yml
+
+TODOS.txt

@@ -6,6 +6,7 @@ from app.exceptions.postgres import WorkerFlowError
 from app.schema import jobs, state
 from app.agent import run_workflow
 from .celery import worker
+from .consumer import publish_result
 
 @lru_cache(maxsize=1)
 def _get_db_clients() -> tuple[postgres.DB, mongodb.DB]:
@@ -62,6 +63,8 @@ def process_agent(self, job_id: str, user_id: str, session_id: str):
 
     # update the job status to completed
     pg.update_job_after_agent_result(job_id=job.id, chat_id=chat.id ,job_status=jobs.JobStatus.completed)
+
+    publish_result(job_id=job.id, session_id=session.id)
 
   except WorkerFlowError as exc:
     if exc.retryable:

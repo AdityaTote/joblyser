@@ -1,17 +1,24 @@
+from collections.abc import Awaitable, Callable
+from typing import Literal
 from fastapi import Depends, HTTPException, Request, status
 from psycopg import AsyncCursor
 from pydantic import BaseModel
 from jwt.exceptions import InvalidTokenError
-from uuid import UUID
 
 from app.database.postgres import pg
 from app.config.jwt import jwt, DepSvc
 
+AllowedServices = Literal["worker", "api", "auth"]
+AllowedServicesInput = AllowedServices | tuple[AllowedServices, ...]
+
 class UserResponse(BaseModel):
   id: str
 
+class UserReqResponse(BaseModel):
+  id: str
+  service: str
 
-def normalize_service_name(svc_raw: str | None) -> str | None:
+def _normalize_service_name(svc_raw: str | None) -> str | None:
   if not svc_raw:
     return None
 
@@ -21,10 +28,11 @@ def normalize_service_name(svc_raw: str | None) -> str | None:
     "worker": "worker",
     "joblyser-api": "api",
     "api": "api",
+    "auth": "auth",
   }
   return aliases.get(normalized)
 
-async def get_user(user_id: str, db: AsyncCursor) -> UserResponse:
+async def _get_user_by_id(user_id: str, db: AsyncCursor) -> UserResponse:
   query = """
     SELECT id
     FROM users
@@ -40,20 +48,24 @@ async def get_user(user_id: str, db: AsyncCursor) -> UserResponse:
   data = UserResponse(id=str(user[0]))
   return data
 
-
-async def authenticate_request(req: Request, db: AsyncCursor = Depends(pg.get_db)) -> UserResponse:
+async def get_user(req: Request, db: AsyncCursor = Depends(pg.get_db)) -> UserReqResponse:
   auth_header = req.headers.get("Authorization")
-  svc = normalize_service_name(req.headers.get("X-Service-Name"))
+  svc_hint = _normalize_service_name(req.headers.get("X-Service-Name"))
 
-  if not auth_header or not svc or not auth_header.startswith("Bearer "):
+  if not auth_header or not auth_header.startswith("Bearer "):
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+  if not svc_hint:
+    svc_hint = "api"
 
   token = auth_header.removeprefix("Bearer ").strip()
   if not token:
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
+  preferred_svc = DepSvc(svc_hint)
+
   try:
-    decoded = jwt.verify(token=token, svc=DepSvc(svc))
+    decoded, verified_svc = jwt.verify_any(token=token, preferred_svc=preferred_svc)
   except (ValueError, InvalidTokenError) as e:
     print(f"Auth failed: token verification failed ({type(e).__name__}: {e})")
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -61,21 +73,34 @@ async def authenticate_request(req: Request, db: AsyncCursor = Depends(pg.get_db
   if not decoded:
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
+  svc = verified_svc.value
+  if svc_hint != svc:
+    print(
+      f"Auth debug: service header {svc_hint!r} does not match token issuer {svc!r}; issuer takes precedence"
+    )
+  
   raw_user_id = decoded.get("user_id") or decoded.get("uid")
   if not raw_user_id:
     print("Auth failed: token missing user id claim")
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+  
+  user = await _get_user_by_id(raw_user_id, db)
 
-  try:
-    user_id = str(UUID(str(raw_user_id).strip()))
-  except ValueError:
-    print(f"Auth failed: invalid user_id format in token: {raw_user_id!r}")
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+  return UserReqResponse(id=user.id, service=svc)
 
-  try:
-    data = await get_user(user_id, db)
-    print(f"Auth successful for user_id={data.id}")
-    return data
-  except ValueError:
-    print(f"Auth failed: user not found for user_id={user_id}")
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+def auth_middleware(allowed_services: AllowedServicesInput) -> Callable[..., Awaitable[UserResponse]]:
+  resolved_allowed_services = (
+    (allowed_services,)
+    if isinstance(allowed_services, str)
+    else allowed_services
+  )
+
+  async def middleware(user: UserReqResponse = Depends(get_user)) -> UserResponse:
+    if user.service not in resolved_allowed_services:
+      print(
+        f"Auth failed: service {user.service!r} not in allowed services {resolved_allowed_services}"
+      )
+      raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    return UserResponse(id=user.id)
+  return middleware

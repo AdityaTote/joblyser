@@ -1,2 +1,2 @@
 from .producer import producer
-from .schema import MessageQueues, ProducerMessage, TaskParams
+from .schema import  ProducerMessage, TaskParams, MessageQueues

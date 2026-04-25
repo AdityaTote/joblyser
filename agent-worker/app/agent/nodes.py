@@ -601,17 +601,17 @@ def write_linkedin_note(state: AgentState) -> dict[str, Any]:
   _register_state_document_for_tools(state)
 
   job_requirements = state.jd_requirements
-  user_profile = state.user_profile_structured or empty_user_profile_structured()
+  user_profile = state.user_profile_structured
   system_message = SystemMessage(content=LINKEDIN_NOTE_PROMPT)
   user_message = HumanMessage(content=json.dumps({
     "jd_requirements": job_requirements,
-    "user_profile": user_profile,
+    "candidate_resume_data": user_profile,
     "user_id": state.user_id,
     "document_id": state.doc_key,
     "document_type": state.rag_document_type or "pdf",
     "key": state.rag_key,
   }, ensure_ascii=False))
-  result = llm.run(messages=[system_message, user_message], task=TaskEnum.GEN, tools=[user_data_tool])
+  result = llm.run(messages=[system_message, user_message], task=TaskEnum.GEN)
   print("[agent:write_linkedin_note] Raw LLM output:", result.content)
   parsed = parse_json_payload(result.content)
   if not parsed:
@@ -637,16 +637,18 @@ def write_cold_mail(state: AgentState) -> dict[str, Any]:
   _register_state_document_for_tools(state)
 
   job_requirements = state.jd_requirements
+  user_profile = state.user_profile_structured or empty_user_profile_structured()
   system_message = SystemMessage(content=COLD_MAIL_PROMPT)
   system_context_message = SystemMessage(content=json.dumps({
     "jd_requirements": job_requirements,
+    "candidate_resume_data": user_profile,
     "user_id": state.user_id,
     "document_id": state.doc_key,
     "document_type": state.rag_document_type or "pdf",
     "key": state.rag_key,
   }, ensure_ascii=False))
   user_message = HumanMessage(content=state.user_query)
-  result = llm.run(messages=[system_message, system_context_message, user_message], task=TaskEnum.GEN, tools=[user_data_tool])
+  result = llm.run(messages=[system_message, system_context_message, user_message], task=TaskEnum.GEN)
   return {
     "cold_mail": _coerce_cold_mail_output(result.content)
   }

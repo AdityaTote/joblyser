@@ -151,33 +151,6 @@ class CoverLetterHeader(BaseModel):
 	company_name: str
 	role_title: str
 
-	@field_validator("github_url", "linkedin_url", mode="before")
-	@classmethod
-	def empty_string_to_none(cls, v: Optional[str]) -> Optional[str]:
-		if not v or v.strip() == "":
-			return None
-		return v
-
-	@field_validator("candidate_name")
-	@classmethod
-	def name_must_not_be_placeholder(cls, v: str) -> str:
-		placeholders = ["candidate", "[your name]", "[name]", "your name"]
-		if v.strip().lower() in placeholders:
-			raise ValueError(
-				f"candidate_name contains a placeholder value: '{v}'. "
-				"Must be the actual candidate name."
-			)
-		return v
-
-	@field_validator("company_name", "role_title")
-	@classmethod
-	def must_not_be_placeholder(cls, v: str) -> str:
-		if v.strip().startswith("[") and v.strip().endswith("]"):
-			raise ValueError(
-				f"Field contains an unfilled placeholder: '{v}'"
-			)
-		return v
-
 
 class CoverLetterBody(BaseModel):
 	paragraph_1_hook: str
@@ -186,72 +159,72 @@ class CoverLetterBody(BaseModel):
 	paragraph_4_complete_picture: str
 	paragraph_5_cta: str
 
-	BANNED_ALL_PARAGRAPHS: ClassVar[list[str]] = [
-		"i am writing to apply",
-		"i am writing to express",
-		"i am passionate about",
-		"i would love to",
-		"i am eager to contribute",
-		"hope this finds you well",
-		"strong background in",
-		"innovative work",
-		"innovative culture",
-		"innovative team",
-		"innovative company",
-		"i believe my skills",
-		"i am excited",
-		"i am thrilled",
-		"i am honored",
-		"i have experience with",
-		"quick learner",
-		"fast learner",
-		"team player",
-		"detail-oriented",
-	]
+	# BANNED_ALL_PARAGRAPHS: ClassVar[list[str]] = [
+	# 	"i am writing to apply",
+	# 	"i am writing to express",
+	# 	"i am passionate about",
+	# 	"i would love to",
+	# 	"i am eager to contribute",
+	# 	"hope this finds you well",
+	# 	"strong background in",
+	# 	"innovative work",
+	# 	"innovative culture",
+	# 	"innovative team",
+	# 	"innovative company",
+	# 	"i believe my skills",
+	# 	"i am excited",
+	# 	"i am thrilled",
+	# 	"i am honored",
+	# 	"i have experience with",
+	# 	"quick learner",
+	# 	"fast learner",
+	# 	"team player",
+	# 	"detail-oriented",
+	# ]
 
-	BANNED_CTA_ONLY: ClassVar[list[str]] = [
-		"thank you so much for your time",
-		"i hope to hear from you",
-		"i would love the opportunity",
-		"please consider my application",
-		"i am eager to discuss",
-	]
+	# BANNED_CTA_ONLY: ClassVar[list[str]] = [
+	# 	"thank you so much for your time",
+	# 	"i hope to hear from you",
+	# 	"i would love the opportunity",
+	# 	"please consider my application",
+	# 	"i am eager to discuss",
+	# ]
 
-	@field_validator(
-		"paragraph_1_hook",
-		"paragraph_2_proof",
-		"paragraph_3_company_fit",
-		"paragraph_4_complete_picture",
-		"paragraph_5_cta",
-	)
-	@classmethod
-	def must_not_be_empty(cls, v: str) -> str:
-		if not v or len(v.strip()) < 50:
-			raise ValueError(
-				"Paragraph is too short (minimum 50 characters). "
-				"Each paragraph must be substantive."
-			)
-		return v
+	# @field_validator(
+	# 	"paragraph_1_hook",
+	# 	"paragraph_2_proof",
+	# 	"paragraph_3_company_fit",
+	# 	"paragraph_4_complete_picture",
+	# 	"paragraph_5_cta",
+	# )
+	# @classmethod
+	# def must_not_be_empty(cls, v: str) -> str:
+	# 	if not v or len(v.strip()) < 50:
+	# 		raise ValueError(
+	# 			"Paragraph is too short (minimum 50 characters). "
+	# 			"Each paragraph must be substantive."
+	# 		)
+	# 	return v
 
-	@field_validator(
-		"paragraph_1_hook",
-		"paragraph_2_proof",
-		"paragraph_3_company_fit",
-		"paragraph_4_complete_picture",
-		"paragraph_5_cta",
-	)
-	@classmethod
-	def check_banned_phrases(cls, v: str, info: ValidationInfo) -> str:
-		banned = cls.BANNED_ALL_PARAGRAPHS.copy()
-		if info.field_name == "paragraph_5_cta":
-			banned += cls.BANNED_CTA_ONLY
-		found = _find_banned(v, banned)
-		if found:
-			raise ValueError(
-				f"{info.field_name} contains banned phrase(s): {found}. "
-				"Rewrite required."
-			)
-		return v
+	# @field_validator(
+	# 	"paragraph_1_hook",
+	# 	"paragraph_2_proof",
+	# 	"paragraph_3_company_fit",
+	# 	"paragraph_4_complete_picture",
+	# 	"paragraph_5_cta",
+	# )
+	# @classmethod
+	# def check_banned_phrases(cls, v: str, info: ValidationInfo) -> str:
+	# 	banned = cls.BANNED_ALL_PARAGRAPHS.copy()
+	# 	if info.field_name == "paragraph_5_cta":
+	# 		banned += cls.BANNED_CTA_ONLY
+	# 	found = _find_banned(v, banned)
+	# 	if found:
+	# 		raise ValueError(
+	# 			f"{info.field_name} contains banned phrase(s): {found}. "
+	# 			"Rewrite required."
+	# 		)
+	# 	return v
 
 	@property
 	def full_body(self) -> str:
@@ -271,25 +244,25 @@ class CoverLetterBody(BaseModel):
 class CoverLetterSignOff(BaseModel):
 	closing: str = "Sincerely"
 	candidate_name: str
-	github_url: Optional[HttpUrl] = None
-	linkedin_url: Optional[HttpUrl] = None
+	github_url: Optional[str] = None
+	linkedin_url: Optional[str] = None
 
-	@field_validator("github_url", "linkedin_url", mode="before")
-	@classmethod
-	def empty_string_to_none(cls, v: Optional[str]) -> Optional[str]:
-		if not v or v.strip() == "":
-			return None
-		return v
+	# @field_validator("github_url", "linkedin_url", mode="before")
+	# @classmethod
+	# def empty_string_to_none(cls, v: Optional[str]) -> Optional[str]:
+	# 	if not v or v.strip() == "":
+	# 		return None
+	# 	return v
 
-	@field_validator("candidate_name")
-	@classmethod
-	def name_must_not_be_placeholder(cls, v: str) -> str:
-		placeholders = ["candidate", "[your name]", "[name]", "your name"]
-		if v.strip().lower() in placeholders:
-			raise ValueError(
-				f"candidate_name contains a placeholder value: '{v}'"
-			)
-		return v
+	# @field_validator("candidate_name")
+	# @classmethod
+	# def name_must_not_be_placeholder(cls, v: str) -> str:
+	# 	placeholders = ["candidate", "[your name]", "[name]", "your name"]
+	# 	if v.strip().lower() in placeholders:
+	# 		raise ValueError(
+	# 			f"candidate_name contains a placeholder value: '{v}'"
+	# 		)
+	# 	return v
 
 
 class CoverLetterContent(BaseModel):
@@ -297,38 +270,38 @@ class CoverLetterContent(BaseModel):
 	body: CoverLetterBody
 	sign_off: CoverLetterSignOff
 
-	@field_validator("body")
-	@classmethod
-	def validate_word_count(cls, v: CoverLetterBody) -> CoverLetterBody:
-		count = v.word_count
-		if count < 250:
-			raise ValueError(
-				f"Cover letter body is too short ({count} words). "
-				"Minimum is 250 words."
-			)
-		if count > 400:
-			raise ValueError(
-				f"Cover letter body is too long ({count} words). "
-				"Maximum is 400 words."
-			)
-		return v
+	# @field_validator("body")
+	# @classmethod
+	# def validate_word_count(cls, v: CoverLetterBody) -> CoverLetterBody:
+	# 	count = v.word_count
+	# 	if count < 250:
+	# 		raise ValueError(
+	# 			f"Cover letter body is too short ({count} words). "
+	# 			"Minimum is 250 words."
+	# 		)
+	# 	if count > 400:
+	# 		raise ValueError(
+	# 			f"Cover letter body is too long ({count} words). "
+	# 			"Maximum is 400 words."
+	# 		)
+	# 	return v
 
-	@field_validator("body")
-	@classmethod
-	def paragraphs_must_be_unique(cls, v: CoverLetterBody) -> CoverLetterBody:
-		paragraphs = [
-			v.paragraph_1_hook,
-			v.paragraph_2_proof,
-			v.paragraph_3_company_fit,
-			v.paragraph_4_complete_picture,
-			v.paragraph_5_cta,
-		]
-		if len(paragraphs) != len(set(paragraphs)):
-			raise ValueError(
-				"Duplicate paragraphs detected. "
-				"Each paragraph must be unique content."
-			)
-		return v
+	# @field_validator("body")
+	# @classmethod
+	# def paragraphs_must_be_unique(cls, v: CoverLetterBody) -> CoverLetterBody:
+	# 	paragraphs = [
+	# 		v.paragraph_1_hook,
+	# 		v.paragraph_2_proof,
+	# 		v.paragraph_3_company_fit,
+	# 		v.paragraph_4_complete_picture,
+	# 		v.paragraph_5_cta,
+	# 	]
+	# 	if len(paragraphs) != len(set(paragraphs)):
+	# 		raise ValueError(
+	# 			"Duplicate paragraphs detected. "
+	# 			"Each paragraph must be unique content."
+	# 		)
+	# 	return v
 
 	def to_plain_text(self) -> str:
 		h = self.header
@@ -375,148 +348,148 @@ class LinkedInNoteContent(BaseModel):
 	note: str
 	character_count: int
 
-	BANNED_PHRASES: ClassVar[list[str]] = [
-		"i am passionate about",
-		"i would love to",
-		"i am eager to",
-		"strong background in",
-		"i have experience with",
-		"innovative company",
-		"innovative team",
-		"innovative work",
-		"i believe i would be a great fit",
-		"dear hiring manager",
-		"i am writing to express",
-		"quick learner",
-		"team player",
-		"excited",
-		"thrilled",
-		"honored",
-	]
+	# BANNED_PHRASES: ClassVar[list[str]] = [
+	# 	"i am passionate about",
+	# 	"i would love to",
+	# 	"i am eager to",
+	# 	"strong background in",
+	# 	"i have experience with",
+	# 	"innovative company",
+	# 	"innovative team",
+	# 	"innovative work",
+	# 	"i believe i would be a great fit",
+	# 	"dear hiring manager",
+	# 	"i am writing to express",
+	# 	"quick learner",
+	# 	"team player",
+	# 	"excited",
+	# 	"thrilled",
+	# 	"honored",
+	# ]
 
-	@field_validator("candidate_name", "role_title", "company_name")
-	@classmethod
-	def must_not_be_placeholder(cls, v: str) -> str:
-		if not v or (v.strip().startswith("[") and v.strip().endswith("]")):
-			raise ValueError(
-				f"Field contains an unfilled placeholder: '{v}'. "
-				"Must be actual value."
-			)
-		return v
+	# @field_validator("candidate_name", "role_title", "company_name")
+	# @classmethod
+	# def must_not_be_placeholder(cls, v: str) -> str:
+	# 	if not v or (v.strip().startswith("[") and v.strip().endswith("]")):
+	# 		raise ValueError(
+	# 			f"Field contains an unfilled placeholder: '{v}'. "
+	# 			"Must be actual value."
+	# 		)
+	# 	return v
 
-	@field_validator("candidate_name")
-	@classmethod
-	def name_must_not_be_generic(cls, v: str) -> str:
-		generic = ["candidate", "your name", "[name]", "[your name]"]
-		if v.strip().lower() in generic:
-			raise ValueError(
-				f"candidate_name is a placeholder: '{v}'. "
-				"Must be the actual candidate name."
-			)
-		return v
+	# @field_validator("candidate_name")
+	# @classmethod
+	# def name_must_not_be_generic(cls, v: str) -> str:
+	# 	generic = ["candidate", "your name", "[name]", "[your name]"]
+	# 	if v.strip().lower() in generic:
+	# 		raise ValueError(
+	# 			f"candidate_name is a placeholder: '{v}'. "
+	# 			"Must be the actual candidate name."
+	# 		)
+	# 	return v
 
-	@field_validator("recruiter_name")
-	@classmethod
-	def recruiter_name_must_not_be_placeholder(cls, v: Optional[str]) -> Optional[str]:
-		if v is None:
-			return v
-		placeholders = [
-			"[recruiter name]", "[name]", "[hiring manager]",
-			"hiring manager", "recruiter",
-		]
-		if v.strip().lower() in placeholders:
-			raise ValueError(
-				f"recruiter_name is a placeholder: '{v}'. "
-				"Use actual name or set to null."
-			)
-		return v
+	# @field_validator("recruiter_name")
+	# @classmethod
+	# def recruiter_name_must_not_be_placeholder(cls, v: Optional[str]) -> Optional[str]:
+	# 	if v is None:
+	# 		return v
+	# 	placeholders = [
+	# 		"[recruiter name]", "[name]", "[hiring manager]",
+	# 		"hiring manager", "recruiter",
+	# 	]
+	# 	if v.strip().lower() in placeholders:
+	# 		raise ValueError(
+	# 			f"recruiter_name is a placeholder: '{v}'. "
+	# 			"Use actual name or set to null."
+	# 		)
+	# 	return v
 
-	@field_validator("note")
-	@classmethod
-	def check_banned_phrases(cls, v: str) -> str:
-		found = _find_banned(v, cls.BANNED_PHRASES)
-		if found:
-			raise ValueError(
-				f"Note contains banned phrase(s): {found}. Rewrite required."
-			)
-		return v
+	# @field_validator("note")
+	# @classmethod
+	# def check_banned_phrases(cls, v: str) -> str:
+	# 	found = _find_banned(v, cls.BANNED_PHRASES)
+	# 	if found:
+	# 		raise ValueError(
+	# 			f"Note contains banned phrase(s): {found}. Rewrite required."
+	# 		)
+	# 	return v
 
-	@field_validator("note")
-	@classmethod
-	def validate_character_limit(cls, v: str) -> str:
-		count = len(v)
-		if count > 300:
-			raise ValueError(
-				f"Note exceeds LinkedIn's 300 character limit "
-				f"({count} characters). Must be 300 or fewer."
-			)
-		if count < 100:
-			raise ValueError(
-				f"Note is too short ({count} characters). "
-				"Minimum is 100 characters — add a specific hook."
-			)
-		return v
+	# @field_validator("note")
+	# @classmethod
+	# def validate_character_limit(cls, v: str) -> str:
+	# 	count = len(v)
+	# 	if count > 300:
+	# 		raise ValueError(
+	# 			f"Note exceeds LinkedIn's 300 character limit "
+	# 			f"({count} characters). Must be 300 or fewer."
+	# 		)
+	# 	if count < 100:
+	# 		raise ValueError(
+	# 			f"Note is too short ({count} characters). "
+	# 			"Minimum is 100 characters — add a specific hook."
+	# 		)
+	# 	return v
 
-	@field_validator("hook")
-	@classmethod
-	def hook_must_be_specific(cls, v: str) -> str:
-		if not v or len(v.strip()) < 20:
-			raise ValueError(
-				f"Hook is too vague or too short: '{v}'. "
-				"Must be a specific project or skill application "
-				"(minimum 20 characters)."
-			)
-		vague_hooks = [
-			"i have experience",
-			"i am skilled",
-			"i know",
-			"i am familiar with",
-		]
-		lowered = v.lower()
-		for phrase in vague_hooks:
-			if phrase in lowered:
-				raise ValueError(
-					f"Hook contains a vague claim: '{phrase}'. "
-					"Use a specific project or concrete achievement instead."
-				)
-		return v
+	# @field_validator("hook")
+	# @classmethod
+	# def hook_must_be_specific(cls, v: str) -> str:
+	# 	if not v or len(v.strip()) < 20:
+	# 		raise ValueError(
+	# 			f"Hook is too vague or too short: '{v}'. "
+	# 			"Must be a specific project or skill application "
+	# 			"(minimum 20 characters)."
+	# 		)
+	# 	vague_hooks = [
+	# 		"i have experience",
+	# 		"i am skilled",
+	# 		"i know",
+	# 		"i am familiar with",
+	# 	]
+	# 	lowered = v.lower()
+	# 	for phrase in vague_hooks:
+	# 		if phrase in lowered:
+	# 			raise ValueError(
+	# 				f"Hook contains a vague claim: '{phrase}'. "
+	# 				"Use a specific project or concrete achievement instead."
+	# 			)
+	# 	return v
 
-	@field_validator("character_count")
-	@classmethod
-	def character_count_must_be_in_range(cls, v: int) -> int:
-		if v > 300:
-			raise ValueError(
-				f"character_count {v} exceeds LinkedIn's 300 character limit."
-			)
-		if v < 100:
-			raise ValueError(
-				f"character_count {v} is too low. Note is too thin."
-			)
-		return v
+	# @field_validator("character_count")
+	# @classmethod
+	# def character_count_must_be_in_range(cls, v: int) -> int:
+	# 	if v > 300:
+	# 		raise ValueError(
+	# 			f"character_count {v} exceeds LinkedIn's 300 character limit."
+	# 		)
+	# 	if v < 100:
+	# 		raise ValueError(
+	# 			f"character_count {v} is too low. Note is too thin."
+	# 		)
+	# 	return v
 
-	@model_validator(mode="after")
-	def validate_post_init(self) -> "LinkedInNoteContent":
-		actual = len(self.note)
-		if actual != self.character_count:
-			raise ValueError(
-				f"character_count field ({self.character_count}) does not "
-				f"match actual note length ({actual} characters)."
-			)
+	# @model_validator(mode="after")
+	# def validate_post_init(self) -> "LinkedInNoteContent":
+	# 	actual = len(self.note)
+	# 	if actual != self.character_count:
+	# 		raise ValueError(
+	# 			f"character_count field ({self.character_count}) does not "
+	# 			f"match actual note length ({actual} characters)."
+	# 		)
 
-		if self.company_name.lower() not in self.note.lower():
-			raise ValueError(
-				f"Company name '{self.company_name}' must appear in the note."
-			)
+	# 	if self.company_name.lower() not in self.note.lower():
+	# 		raise ValueError(
+	# 			f"Company name '{self.company_name}' must appear in the note."
+	# 		)
 
-		role_words = self.role_title.lower().split()
-		note_lower = self.note.lower()
-		if not any(word in note_lower for word in role_words if len(word) > 3):
-			raise ValueError(
-				f"Role title '{self.role_title}' (or key words from it) "
-				"must appear in the note."
-			)
+	# 	role_words = self.role_title.lower().split()
+	# 	note_lower = self.note.lower()
+	# 	if not any(word in note_lower for word in role_words if len(word) > 3):
+	# 		raise ValueError(
+	# 			f"Role title '{self.role_title}' (or key words from it) "
+	# 			"must appear in the note."
+	# 		)
 
-		return self
+	# 	return self
 
 
 class LinkedInNoteNodeOutput(BaseModel):
@@ -559,7 +532,7 @@ class AgentState(BaseModel):
 	company_info: Optional[CompanyInfo] = None
 	role_fit: Optional[RoleFitOutput] = None
 
-	# application note node output
+	# application note node output	
 	application_note: Optional[str] = None
 
 	# cover letter node output

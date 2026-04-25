@@ -169,6 +169,13 @@ export interface JobStatusResponse {
   chat_id: string | null;
 }
 
+export interface JobStatusTimeoutResponse {
+  status: "timeout";
+  job_id: string;
+}
+
+export type JobStatusEventResponse = JobStatusResponse | JobStatusTimeoutResponse;
+
 export interface Document {
   id: string;
   key: string;
