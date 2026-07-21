@@ -5,7 +5,7 @@ from psycopg import AsyncCursor
 from pydantic import BaseModel
 from jwt.exceptions import InvalidTokenError
 
-from app.database.postgres import pg
+from app.api.dependencies import get_pg_db
 from app.config.jwt import jwt, DepSvc
 
 AllowedServices = Literal["worker", "api", "auth"]
@@ -48,7 +48,7 @@ async def _get_user_by_id(user_id: str, db: AsyncCursor) -> UserResponse:
   data = UserResponse(id=str(user[0]))
   return data
 
-async def get_user(req: Request, db: AsyncCursor = Depends(pg.get_db)) -> UserReqResponse:
+async def get_user(req: Request, db: AsyncCursor = Depends(get_pg_db)) -> UserReqResponse:
   auth_header = req.headers.get("Authorization")
   svc_hint = _normalize_service_name(req.headers.get("X-Service-Name"))
 

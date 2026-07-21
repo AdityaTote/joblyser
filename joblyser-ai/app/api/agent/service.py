@@ -3,10 +3,11 @@ from uuid import uuid4
 
 from bson import ObjectId
 from bson.errors import InvalidId
+# from motor.motor_asyncio import AsyncIOMotorCollection
 from psycopg import AsyncCursor
 
+from app.database.mongodb import MongoDB
 from app.messaging import producer, ProducerMessage, TaskParams
-from app.database.mongodb import mongo
 from .repository import JobRepository
 from .exception import (
   AgentError,
@@ -28,7 +29,7 @@ class AgentService:
   _DEFAULT_USER_QUERY = "Analyze the provided job description and generate the requested output."
 
   @staticmethod
-  async def _cleanup_session(session_id: str, user_id: str):
+  async def _cleanup_session(session_id: str, user_id: str, mongo: MongoDB):
     try:
       await mongo.sessions.delete_one({"_id": ObjectId(session_id), "user_id": user_id})
     except Exception:
@@ -54,7 +55,11 @@ class AgentService:
     return serialized
 
   @staticmethod
-  async def _run_agent(input_data: AgentServiceParams, pg_db: AsyncCursor) -> RunAgentResponse:
+  async def _run_agent(
+    input_data: AgentServiceParams,
+    pg_db: AsyncCursor,
+    mongo: MongoDB
+  ) -> RunAgentResponse:
     input_data.doc_key = input_data.doc_key.strip()
     input_data.jd_text = input_data.jd_text.strip()
     input_data.user_query = input_data.user_query.strip()
@@ -111,7 +116,7 @@ class AgentService:
       )
     except Exception as error:
       if created_session_id:
-        await AgentService._cleanup_session(session_id=created_session_id, user_id=input_data.user_id)
+        await AgentService._cleanup_session(session_id=created_session_id, user_id=input_data.user_id, mongo=mongo)
       raise JobCreateFailed(message=f"Failed to create agent job: {error}") from error
       
     print("[before publish] Created job with id:", job.id)
@@ -132,14 +137,14 @@ class AgentService:
       print(f"Published job {job.id} to queue")
     except Exception as error:
       if created_session_id:
-        await AgentService._cleanup_session(session_id=created_session_id, user_id=input_data.user_id)
+        await AgentService._cleanup_session(session_id=created_session_id, user_id=input_data.user_id, mongo=mongo)
       raise QueuePublishFailed() from error
     return RunAgentResponse(job_id=job.id, session_id=input_data.session_id, status=JobStatus.queued)
 
   @staticmethod
-  async def run_agent_safe(input_data: AgentServiceParams, pg_db: AsyncCursor):
+  async def run_agent_safe(input_data: AgentServiceParams, pg_db: AsyncCursor, mongo: MongoDB):
     try:
-      return await AgentService._run_agent(input_data=input_data, pg_db=pg_db)
+      return await AgentService._run_agent(input_data=input_data, pg_db=pg_db, mongo=mongo)
     except AgentError:
       raise
     except Exception as error:
@@ -156,17 +161,21 @@ class AgentService:
       raise AgentError("Failed to get job status") from error
   
   @staticmethod
-  async def get_sessions(limit: int, offset: int, user_id: str):
+  async def get_sessions(limit: int, offset: int, user_id: str, mongo: MongoDB):
     try:
-      sessions =  mongo.sessions.find({
+      cursor = mongo.sessions.find({
         "user_id": user_id
       }).sort("created_at", -1).skip(offset).limit(limit)
-      return [AgentService._serialize_mongo_doc(session) async for session in sessions]
+      return [AgentService._serialize_mongo_doc(session) async for session in cursor]
     except Exception as error:
       raise AgentError("Failed to retrieve sessions", status_code=500) from error
   
   @staticmethod
-  async def get_chats(input: ChatsService, pg_db: AsyncCursor):
+  async def get_chats(
+    input: ChatsService,
+    pg_db: AsyncCursor,
+    mongo: MongoDB
+  ):
     session_object_id = AgentService._parse_object_id(input.session_id, "session_id")
 
     if input.job_id is None:
@@ -177,11 +186,11 @@ class AgentService:
       if session is None:
         raise AgentError("Session not found", status_code=404)
       
-      chats = mongo.chats.find({
+      cursor = mongo.chats.find({
         "session_id": str(session["_id"]),
         "user_id": input.user_id
       }).sort("created_at", -1)
-      return [AgentService._serialize_mongo_doc(chat) async for chat in chats]
+      return [AgentService._serialize_mongo_doc(chat) async for chat in cursor]
     else:
       try:
         job = await JobRepository.get_job(job_id=input.job_id, db=pg_db)
@@ -206,17 +215,20 @@ class AgentService:
 
       chat_object_id = AgentService._parse_object_id(job.chat_id, "job chat id")
 
-      chats = await mongo.chats.find_one({
+      chat = await mongo.chats.find_one({
         "_id": chat_object_id,
         "session_id": job.session_id,
         "user_id": input.user_id
       })
-      if chats is None:
+      if chat is None:
         raise AgentError("Chat not found", status_code=404)
-      return [AgentService._serialize_mongo_doc(chats)]
+      return [AgentService._serialize_mongo_doc(chat)]
 
   @staticmethod
-  async def edit_chat(input: EditChatService):
+  async def edit_chat(
+    input: EditChatService,
+    mongo: MongoDB
+  ):
     if not input.edited_text or not input.edited_text.strip():
       raise AgentError("edited_text is required", status_code=400)
 

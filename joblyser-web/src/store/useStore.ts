@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Session, User } from "@/types/api";
+import { Session, User } from "@/types";
 
 interface StoreState {
   user: User | null;

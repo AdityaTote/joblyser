@@ -20,7 +20,10 @@ from app.schema.state import ApplyNodeOutput, ColdMailNodeOutput, CoverLetterNod
 
 class DB:
   def __init__(self, config: Config):
-    self._db = self._get_database(config.mongodb_uri, config.mongodb_name)
+    if not config.mongodb_name:
+      raise MongoConfigError("MongoDB database name is required")
+    self._client = self._get_mongo_connection(config.mongodb_uri)
+    self._db = self._client[config.mongodb_name]
   
   def _get_mongo_connection(self, db_uri: str):
     if not db_uri:
@@ -32,10 +35,8 @@ class DB:
     except PyMongoError as exc:
       raise MongoConnectionFailed(error=exc) from exc
 
-  def _get_database(self, db_uri: str, db_name: str):
-    if not db_name:
-      raise MongoConfigError("MongoDB database name is required")
-    return self._get_mongo_connection(db_uri)[db_name]
+  def close(self):
+    self._client.close()
 
   def get_session_by_id(self, session_id: str) -> SessionRow:
     if not session_id:

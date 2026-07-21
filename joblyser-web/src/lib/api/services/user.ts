@@ -1,5 +1,5 @@
 import { BaseService } from "../base";
-import { User, ApiResponse } from "@/types/api";
+import { User, ApiResponse } from "@/types";
 
 export class UserService extends BaseService {
   async getMe(): Promise<ApiResponse<User>> {

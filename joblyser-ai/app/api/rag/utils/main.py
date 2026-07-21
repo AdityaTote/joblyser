@@ -2,26 +2,20 @@ from datetime import datetime, timezone
 
 from chromadb import Metadata
 
-from app.database.chroma import get_vector_store
+from app.database.chroma import VectorStore
 from app.api.rag.exception import (
   DocumentLoadFailed,
   EmbeddingGenerationFailed,
   RetrievalFailed,
-  VectorStoreUnavailable,
   VectorStoreWriteFailed,
 )
-from .doc_loader import document_loader
+from .doc_loader import DocumentLoader
 from .embedding import embed
 from ..schema import RagQuery, RagStore
 
 class Rag:
   @staticmethod
-  async def store(input: RagStore):
-    try:
-      vector_store = get_vector_store()
-    except Exception as error:
-      raise VectorStoreUnavailable() from error
-
+  async def store(input: RagStore, vector_store: VectorStore, document_loader: DocumentLoader):
     try:
       docs = document_loader.load(input.key)
     except Exception as error:
@@ -85,12 +79,7 @@ class Rag:
     return True
 
   @staticmethod
-  async def query(input: RagQuery):
-    try:
-      vector_store = get_vector_store()
-    except Exception as error:
-      raise VectorStoreUnavailable() from error
-
+  async def query(input: RagQuery, vector_store: VectorStore):
     try:
       embed_query = embed.generate_embeddings([input.user_query])
     except Exception as error:

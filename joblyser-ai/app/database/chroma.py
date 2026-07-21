@@ -1,9 +1,6 @@
 from chromadb import HttpClient, Embeddings, Metadata, QueryResult
 from chromadb.api.types import Where
 from chromadb.errors import NotFoundError
-from functools import lru_cache
-
-from app.config import config
 
 
 def _get_embed_function():
@@ -61,20 +58,9 @@ class VectorStore:
       )
       return result
 
-@lru_cache(maxsize=1)
-def get_vector_store() -> VectorStore:
-  return VectorStore(
-    host=config.chroma_host,
-    port=config.chroma_port,
-    collection_name=config.chroma_collection,
-    ssl=config.chroma_ssl,
-  )
-
-
-def ping_chroma() -> bool:
-  try:
-    client = HttpClient(host=config.chroma_host, port=config.chroma_port, ssl=config.chroma_ssl)
-    client.heartbeat()
-    return True
-  except Exception:
-    return False
+    def ping(self) -> bool:
+      try:
+        self._client.heartbeat()
+        return True
+      except Exception:
+        return False

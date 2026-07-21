@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import { extractApiErrorMessage } from "@/lib/api/error";
-import { User } from "@/types/api";
+import { User } from "@/types";
 
 export function useUser() {
   return useQuery<User, Error>({

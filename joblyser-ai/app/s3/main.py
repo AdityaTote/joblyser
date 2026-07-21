@@ -3,19 +3,19 @@ from typing import Any
 import boto3
 import httpx
 
-from app.config import config
 from .schema import GeneratePresignedURLResponseSchema, ALLOWED_CONTENT_TYPES
 
 
 class S3Client:
-    def __init__(self, bucket_name: str):
+    def __init__(self, bucket_name: str, access_key: str, secret_key: str, region: str, cdn_url: str, max_upload_size: int = 10):
         self._bucket = bucket_name
-        self._max_upload_size_bytes = config.s3_max_upload_size_mb * 1024 * 1024
+        self._max_upload_size_bytes = max_upload_size * 1024 * 1024
+        self._cdn_url = cdn_url
         self._client = boto3.client(
             "s3",
-            aws_access_key_id=config.aws_access_key_id,
-            aws_secret_access_key=config.aws_secret_access_key,
-            region_name=config.aws_region_name,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            region_name=region,
         )
 
     def generate_put_presigned_url(
@@ -62,9 +62,13 @@ class S3Client:
 
         response.raise_for_status()
 
-        if config.aws_cloudfront_url:
-            return f"{config.aws_cloudfront_url.rstrip('/')}/{object_key}"
+        if self._cdn_url:
+            return f"{self._cdn_url.rstrip('/')}/{object_key}"
         return object_key
+
+    def download_file(self, object_key: str) -> bytes:
+        response = self._client.get_object(Bucket=self._bucket, Key=object_key)
+        return response["Body"].read()
 
     def _generate_object_key(self, content_type: str):
         ext = ALLOWED_CONTENT_TYPES[content_type]
@@ -77,8 +81,5 @@ class S3Client:
             raise ValueError(
                 f"File too large: {file_size_bytes} bytes. "
                 f"Maximum allowed is {self._max_upload_size_bytes} bytes "
-                f"({config.s3_max_upload_size_mb} MB)."
+                f"({self._max_upload_size_bytes / 1024 * 1024 } MB)."
             )
-
-
-s3 = S3Client(bucket_name=config.aws_bucket)

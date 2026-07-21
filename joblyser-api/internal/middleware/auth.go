@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AdityaTote/joblyser/joblyser-api/internal/auth"
 	"github.com/AdityaTote/joblyser/joblyser-api/internal/config"
+	"github.com/AdityaTote/joblyser/joblyser-api/internal/token"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
@@ -35,7 +35,7 @@ func AuthWithConfig(cfg *config.Config, log zerolog.Logger) func(http.Handler) h
 				return
 			}
 
-			claims, err := auth.ParseAccessToken([]byte(cfg.JWTSecretAuth), strings.TrimSpace(parts[1]))
+			claims, err := token.ParseAccessToken([]byte(cfg.JWTSecretAuth), strings.TrimSpace(parts[1]))
 			if err != nil {
 				log.Warn().Err(err).Msg("invalid access token")
 				http.Error(w, "invalid token", http.StatusUnauthorized)

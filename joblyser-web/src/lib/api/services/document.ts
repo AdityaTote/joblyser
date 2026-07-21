@@ -1,5 +1,5 @@
 import { BaseService } from "../base";
-import { Document, ApiResponse, UploadedDocument } from "@/types/api";
+import { Document, ApiResponse, UploadedDocument } from "@/types";
 
 export class DocumentService extends BaseService {
   async createDocument(file: File): Promise<ApiResponse<UploadedDocument>> {

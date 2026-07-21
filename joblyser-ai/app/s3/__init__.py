@@ -1,1 +1,1 @@
-from .main import s3
+from .main import S3Client

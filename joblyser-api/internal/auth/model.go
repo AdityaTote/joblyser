@@ -36,3 +36,8 @@ type userDataType struct {
 	ID    uuid.UUID
 	Email string
 }
+
+type meResponse struct {
+	ID    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
+}

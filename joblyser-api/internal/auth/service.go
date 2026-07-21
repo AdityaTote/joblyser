@@ -9,6 +9,7 @@ import (
 	google_lib "github.com/AdityaTote/joblyser/joblyser-api/internal/auth/lib"
 	auth_repository "github.com/AdityaTote/joblyser/joblyser-api/internal/auth/repository"
 	"github.com/AdityaTote/joblyser/joblyser-api/internal/config"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog"
@@ -19,6 +20,7 @@ type authService interface {
 	signIn(credentialAuthRequest) (*authServiceResponse, error)
 	getAuthorizeUrl() (*googleAuthorizeUrl, error)
 	generateAccessToken(code string) (*authServiceResponse, error)
+	getUserById(userId uuid.UUID) (*meResponse, error)
 }
 
 type service struct {
@@ -228,5 +230,22 @@ func (a *service) generateAccessToken(code string) (*authServiceResponse, error)
 		UserID: user.ID,
 		Email:  user.Email,
 		Token:  token,
+	}, nil
+}
+
+func (a *service) getUserById(userId uuid.UUID) (*meResponse, error) {
+	user, err := a.repo.GetUserById(a.ctx, userId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			a.log.Warn().Msg("user not found")
+			return nil, newAuthHTTPError(http.StatusNotFound, ErrUserNotFound)
+		}
+		a.log.Error().Err(err).Msg("failed to get user by id")
+		return nil, newAuthHTTPError(http.StatusInternalServerError, ErrAuthService)
+	}
+
+	return &meResponse{
+		ID:    user.ID,
+		Email: user.Email,
 	}, nil
 }

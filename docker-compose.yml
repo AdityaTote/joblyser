@@ -88,7 +88,9 @@ services:
       dockerfile: docker/worker.dockerfile
     container_name: worker
     env_file:
-      - agent-worker/.env
+      - agent-worker/.env.docker
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     depends_on:
       migrate:

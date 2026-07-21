@@ -49,7 +49,7 @@ func New(cfg *config.Config, log zerolog.Logger) (*App, error) {
 	v1 := chi.NewRouter()
 	
 	authRouter := chi.NewRouter()
-	auth.RegisterRoutes(authRouter, log, cfg, db.Pool)
+	auth.RegisterRoutes(authRouter, log, cfg, db.Pool, middleware.AuthWithConfig(cfg, log))
 	v1.Mount("/auth", authRouter)
 	
 	protected := chi.NewRouter()

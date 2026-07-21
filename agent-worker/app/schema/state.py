@@ -1,8 +1,8 @@
 import re
 from enum import Enum
-from typing import Any, ClassVar, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, Optional, TypedDict, Union
 
-from pydantic import BaseModel, Field, HttpUrl, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, Field, HttpUrl
 
 
 def _find_banned(text: str, phrases: list[str]) -> list[str]:

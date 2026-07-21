@@ -1,5 +1,5 @@
 import { BaseService } from "../base";
-import { AuthResponse, ApiResponse } from "@/types/api";
+import { AuthResponse, ApiResponse, User } from "@/types";
 
 export class AuthService extends BaseService {
   async signup(
@@ -27,5 +27,9 @@ export class AuthService extends BaseService {
       ApiResponse<{ url: string }>,
       ApiResponse<{ url: string }>
     >("/auth/google");
+  }
+
+  async me(): Promise<ApiResponse<User>> {
+    return this.client.get<ApiResponse<User>, ApiResponse<User>>("/auth/me");
   }
 }

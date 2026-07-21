@@ -122,6 +122,8 @@ type SessionResponse struct {
 type SessionsResponse struct {
 	Id        string `json:"id"`
 	UserId    string `json:"user_id"`
+	JdText    string `json:"jd_text,omitempty"`
+	DocKey    string `json:"doc_key,omitempty"`
 	CreatedAt string `json:"created_at"`
 }
 

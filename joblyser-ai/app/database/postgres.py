@@ -5,13 +5,15 @@ from urllib.parse import quote_plus
 import psycopg_pool
 from psycopg import AsyncCursor
 
-from app.config import config
+class Postgres:
+  def __init__(self, db_user: str, db_host: str, db_password: str, db_port: int, db_name: str):
+    self._pool = self._connect(db_user, db_host, db_password, db_port, db_name)
 
-class DB:
-  def __init__(self, db_uri: str):
-    self._pool = self._connect(db_uri=db_uri)
+  def _dsn(self, db_user: str, db_host: str, db_password: str, db_port: int, db_name: str):
+    return f"postgresql://{quote_plus(db_user)}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
 
-  def _connect(self, db_uri: str):
+  def _connect(self, db_user: str, db_host: str, db_password: str, db_port: int, db_name: str):
+    db_uri = self._dsn(db_user=db_user, db_host=db_host, db_name=db_name, db_password=db_password, db_port=db_port)
     return psycopg_pool.AsyncConnectionPool(
       conninfo=db_uri,
       min_size=1,
@@ -47,11 +49,3 @@ class DB:
         await cur.execute("SELECT 1;")
         await cur.fetchone()
       return True
-
-pg = DB(
-  db_uri=(
-    f"postgresql://{quote_plus(config.postgres_user)}:"
-    f"{quote_plus(config.postgres_password)}@"
-    f"{config.postgres_host}:{config.postgres_port}/{config.postgres_name}"
-  )
-)

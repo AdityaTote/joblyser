@@ -7,6 +7,7 @@ from tenacity import retry, wait_exponential, stop_after_attempt
 from langchain_core.messages import ToolMessage
 
 from app.core.config import config
+from app.core.langfuse import get_langfuse_callbacks, serialize_observation_payload
 
 class TaskEnum(Enum):
     EXTRACT = "extraction"
@@ -62,10 +63,16 @@ class LLM:
             ]
         return messages
 
+    def _invoke_model(self, model, messages: list[Any]):
+        callbacks = get_langfuse_callbacks()
+        if callbacks:
+            return model.invoke(messages, config={"callbacks": callbacks})
+        return model.invoke(messages)
+
     @retry(wait=wait_exponential(min=1, max=3), stop=stop_after_attempt(3))
     def _execute(self, model, messages, meta: dict):
         start = time.time()
-        response = model.invoke(messages)
+        response = self._invoke_model(model, messages)
         print(f"[LLM] initial response: {response}")
 
         max_tool_rounds = 6
@@ -84,7 +91,20 @@ class LLM:
                 tool_args = tool_call["args"]
                 tool_call_id = tool_call["id"]
                 tool = next(t for t in meta["tools_list"] if t.name == tool_name)
-                result = tool.invoke(tool_args)
+                callbacks = get_langfuse_callbacks()
+                if callbacks:
+                    from langfuse import get_client
+
+                    langfuse = get_client()
+                    with langfuse.start_as_current_observation(
+                        as_type="span",
+                        name=f"tool.{tool_name}",
+                        input=serialize_observation_payload(tool_args),
+                    ) as tool_span:
+                        result = tool.invoke(tool_args)
+                        tool_span.update(output=serialize_observation_payload(result))
+                else:
+                    result = tool.invoke(tool_args)
                 if isinstance(result, str):
                     tool_content = result
                 else:
@@ -95,7 +115,7 @@ class LLM:
                     content=tool_content,
                 ))
             messages = [*messages, response, *tool_outputs]
-            response = model.invoke(messages)
+            response = self._invoke_model(model, messages)
 
         latency = time.time() - start
         print(

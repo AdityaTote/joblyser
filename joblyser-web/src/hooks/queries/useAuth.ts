@@ -1,10 +1,11 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { extractApiErrorMessage } from "@/lib/api/error";
-import { AuthResponse } from "@/types/api";
+import { AuthResponse, User } from "@/types";
 import { useStore } from "@/store/useStore";
 
 type AuthPayload = Record<string, unknown>;
@@ -34,7 +35,7 @@ export function useSignIn() {
     },
     onSuccess: (data) => {
       setUser(mapAuthUser(data));
-      router.push("/dashboard");
+      router.push("/new");
     },
   });
 }
@@ -54,7 +55,7 @@ export function useSignUp() {
     },
     onSuccess: (data) => {
       setUser(mapAuthUser(data));
-      router.push("/dashboard");
+      router.push("/new");
     },
   });
 }
@@ -78,3 +79,35 @@ export function useGoogleUrl() {
     },
   });
 }
+
+export function useMe(enabled: boolean = true) {
+  const updateUser = useStore((s) => s.updateUser);
+
+  const query = useQuery<User, Error>({
+    queryKey: ["auth", "me"],
+    queryFn: async () => {
+      try {
+        const response = await api.auth.me();
+        return response.data;
+      } catch (error) {
+        throw new Error(
+          extractApiErrorMessage(error, "Failed to fetch current user"),
+        );
+      }
+    },
+    enabled,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Merge fetched fields into Zustand store without overwriting the token
+  useEffect(() => {
+    if (query.data) {
+      updateUser(query.data);
+    }
+  }, [query.data, updateUser]);
+
+  return query;
+}
+
+

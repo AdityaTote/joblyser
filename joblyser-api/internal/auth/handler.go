@@ -8,6 +8,7 @@ import (
 	auth_repository "github.com/AdityaTote/joblyser/joblyser-api/internal/auth/repository"
 	"github.com/AdityaTote/joblyser/joblyser-api/internal/config"
 	"github.com/AdityaTote/joblyser/joblyser-api/internal/lib"
+	"github.com/AdityaTote/joblyser/joblyser-api/internal/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 )
@@ -17,6 +18,7 @@ type UserHandler interface {
 	SignIn(w http.ResponseWriter, r *http.Request)
 	Google(w http.ResponseWriter, r *http.Request)
 	GoogleCallback(w http.ResponseWriter, r *http.Request)
+	Me(w http.ResponseWriter, r *http.Request)
 }
 
 type auth struct {
@@ -129,4 +131,27 @@ func (a *auth) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		Data:    resp,
 	})
 	return
+}
+
+func (a *auth) Me(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.UserIDFromContext(r.Context())
+	if err != nil {
+		a.log.Warn().Err(err).Msg("unauthorized request to /me")
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := a.svc.getUserById(userID)
+	if err != nil {
+		a.log.Warn().Err(err).Msg("failed to get user by id")
+		statusCode, message := authErrorResponse(err)
+		http.Error(w, message, statusCode)
+		return
+	}
+
+	lib.JSONWriter(w, http.StatusOK, lib.JSONResponse{
+		Success: true,
+		Message: "user fetched successfully",
+		Data:    user,
+	})
 }

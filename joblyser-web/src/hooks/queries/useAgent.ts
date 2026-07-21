@@ -10,7 +10,7 @@ import {
   RunAgentResponse,
   SessionResponse,
   SessionsResponse,
-} from "@/types/api";
+} from "@/types";
 
 export function useSessions() {
   return useQuery<SessionsResponse[], Error>({

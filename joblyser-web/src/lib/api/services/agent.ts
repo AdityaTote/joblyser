@@ -8,7 +8,7 @@ import {
   AgentRunRequest,
   EditChatRequest,
   ApiResponse,
-} from "@/types/api";
+} from "@/types";
 
 export class AgentService extends BaseService {
   constructor(baseURL: string) {
